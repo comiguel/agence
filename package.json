@@ -1,0 +1,25 @@
+{
+  "name": "agence",
+  "version": "1.0.0",
+  "description": "Agence test by Carlos Hincapié",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "agence",
+    "nodejs",
+    "vuejs"
+  ],
+  "author": "Carlos Hincapié <carmihinfer@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "nodemon": "^1.18.9"
+  },
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "mysql": "^2.16.0"
+  }
+}
