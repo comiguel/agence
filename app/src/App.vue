@@ -33,34 +33,41 @@
       </b-col>
       <b-col md="4">
         <b-row class="justify-content-center my-2">
-          <b-button :disabled="!btnRelatorioState" @click="generateRelatorio" variant="info">Relatório</b-button>
+          <b-button :disabled="!btnState" @click="generateRelatorio" variant="info">Relatório</b-button>
         </b-row>
         <b-row class="justify-content-center my-2">
-          <b-button @click="generateGrafico" variant="success">Gráfico</b-button>
+          <b-button :disabled="!btnState" @click="generateGrafico" variant="success">Gráfico</b-button>
         </b-row>
         <b-row class="justify-content-center my-2">
-          <b-button @click="generatePizza" variant="primary">Pizza</b-button>
+          <b-button :disabled="!btnState" @click="generatePizza" variant="primary">Pizza</b-button>
         </b-row>
       </b-col>
     </b-row>
+    <b-row class="justify-content-center my-5">
+      <detail :component="component"></detail>
+    </b-row>
   </b-container>
-
 </template>
 
 <script>
   import axios from 'axios';
   import config from './config';
-  import navbar from './components/navbar';
-  import selector from './components/selector';
+  import navbar from './components/Navbar';
+  import selector from './components/Selector';
+  import detail from './components/Detail';
   export default {
     name: 'app',
-    components: {navbar, selector},
+    components: {navbar, selector, detail},
+    data() {
+      return {
+        component: 'consultor',
+      }
+    },
     mounted() {
       axios.get(`${config.apiDir}/consultor`)
       .then((response) => {
-        // console.log(response.data.results);
         this.$store.commit('updateConsultors', response.data.results.map(function(elem, index) {
-          return elem.co_usuario;
+          return { value: elem.co_usuario, text: elem.no_usuario };
         }));
       });
     },
@@ -77,15 +84,16 @@
         this.$store.commit('updateDateSelect', {field, value});
       },
       generateRelatorio() {
-        this.$store.dispatch('generateRelatorio');
+        this.$store.dispatch('processData');
+        this.component = 'consultor';
       },
       generateGrafico() {
-        // this.$store.dispatch('generateGrafico');
-        console.log("Botón generateGrafico");
+        this.$store.dispatch('processData');
+        this.component = 'grafico';
       },
       generatePizza() {
-        // this.$store.dispatch('generatePizza');
-        console.log("Botón generatePizza");
+        this.$store.dispatch('processData');
+        this.component = 'pizza';
       }
     },
     computed: {
@@ -101,13 +109,16 @@
       years() {
         return this.$store.getters.years;
       },
+      processedData() {
+        return this.$store.state.processedData === null;
+      },
       datesError() {
         if (!this.$store.getters.relatorioValidation && this.$store.getters.datesFilled){
           return true;
         }
         return false;
       },
-      btnRelatorioState() {
+      btnState() {
         if (this.$store.getters.relatorioValidation && this.$store.state.selected.length > 0){
           return true;
         }

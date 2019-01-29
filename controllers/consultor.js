@@ -1,5 +1,6 @@
 const mysql = require('mysql');
 const config = require('../config');
+const math = require('mathjs');
 const connection = mysql.createConnection(config.db);
 // connection.query('USE agence');
 connection.connect(function(error){
@@ -11,8 +12,12 @@ connection.connect(function(error){
 });
 
 function getConsultors(req, res) {
+  const sql = `SELECT u.co_usuario, u.no_usuario FROM cao_usuario u
+              LEFT JOIN permissao_sistema p ON u.co_usuario = p.co_usuario
+              WHERE p.co_sistema = 1 and p.in_ativo = 'S'
+              AND p.co_tipo_usuario in (0,1,2)`;
 	const query = connection.query(
-    "SELECT * FROM `cao_usuario` u left join permissao_sistema p ON u.co_usuario = p.co_usuario where p.co_sistema = 1 and p.in_ativo = 'S' and p.co_tipo_usuario in (0,1,2)",
+    sql,
     function selectConsultors(err, results, fields) {
     if (err) {
       console.log("Error: " + err.message);
@@ -28,13 +33,15 @@ function getConsultors(req, res) {
 
 function getRelatorio(req, res) {
   // console.log(req.body);
-  const sql = `SELECT DATE_FORMAT(f.data_emissao, "%M of %Y") as label_date, f.*, os.co_usuario, s.brut_salario as salario
+  const sql = `SELECT DATE_FORMAT(f.data_emissao, "%M of %Y") as label_date, f.*, os.co_usuario, u.no_usuario, s.brut_salario as salario
               FROM cao_fatura f
               LEFT JOIN cao_os os ON os.co_os = f.co_os
               LEFT JOIN cao_salario s ON os.co_usuario = s.co_usuario
+              LEFT JOIN cao_usuario u ON os.co_usuario = u.co_usuario
               WHERE f.data_emissao BETWEEN CAST('${req.body.fromDate}' AS DATE)
               AND LAST_DAY(CAST('${req.body.toDate}' AS DATE))
-              AND os.co_usuario IN ('${req.body.selected.join("','")}')`;
+              AND os.co_usuario IN ('${req.body.selected.join("','")}')
+              ORDER BY f.data_emissao`;
   // res.status(200).send({status: sql});
   // console.log(sql);
   const query = connection.query(
@@ -46,51 +53,49 @@ function getRelatorio(req, res) {
     }
     var proccessedData = {};
     results.forEach(function(el) {
-      // console.log(el);
       let receita = calculateReceita(el.valor, el.total_imp_inc);
       let currentData = {
-        receita: round(receita, 2),
-        custo_fixo: el.salario,
-        comissao: round(receita * (el.comissao_cn/100), 2),
+        receita: math.round(receita, 2),
+        custo_fixo: el.salario || 0,
+        comissao: math.round(math.eval(`${receita}*(${el.comissao_cn}/100)`), 2),
       };
-      let lucro = round(currentData.receita - currentData.custo_fixo - currentData.comissao, 2);
-      if (el.co_usuario in proccessedData) {
-        if (el.label_date in proccessedData[el.co_usuario]) {
-          proccessedData[el.co_usuario][el.label_date]['receita'] += currentData.receita;
-          proccessedData[el.co_usuario][el.label_date]['custo_fixo'] += currentData.custo_fixo;
-          proccessedData[el.co_usuario][el.label_date]['comissao'] += currentData.comissao;
-          proccessedData[el.co_usuario][el.label_date]['lucro'] += lucro;
+      let lucro = math.round(currentData.receita - currentData.custo_fixo - currentData.comissao, 2);
+      if (el.no_usuario in proccessedData) {
+        // proccessedData[el.no_usuario]['total_receita'] += currentData.receita;
+        if (el.label_date in proccessedData[el.no_usuario]) {
+          proccessedData[el.no_usuario][el.label_date]['receita'] += currentData.receita;
+          proccessedData[el.no_usuario][el.label_date]['custo_fixo'] += currentData.custo_fixo;
+          proccessedData[el.no_usuario][el.label_date]['comissao'] += currentData.comissao;
+          proccessedData[el.no_usuario][el.label_date]['lucro'] += lucro;
         } else {
-          proccessedData[el.co_usuario][el.label_date] = {
-            receita,
+          proccessedData[el.no_usuario][el.label_date] = {
+            receita: currentData.receita,
             custo_fixo: currentData.custo_fixo,
             comissao: currentData.comissao,
             lucro,
           };
         }
       } else {
-        proccessedData[el.co_usuario] = {};
-        proccessedData[el.co_usuario][el.label_date] = {};
-        proccessedData[el.co_usuario][el.label_date]['receita'] = currentData.receita;
-        proccessedData[el.co_usuario][el.label_date]['custo_fixo'] = currentData.custo_fixo;
-        proccessedData[el.co_usuario][el.label_date]['comissao'] = currentData.comissao;
-        proccessedData[el.co_usuario][el.label_date]['lucro'] = lucro;
-        /*proccessedData[el.co_usuario][el.label_date] = {
-          receita,
+        proccessedData[el.no_usuario] = {};
+        // proccessedData[el.no_usuario]['total_receita'] = currentData.receita;
+        proccessedData[el.no_usuario][el.label_date] = {
+          receita: currentData.receita,
           custo_fixo: currentData.custo_fixo,
           comissao: currentData.comissao,
-          lucro,
-        };*/
+          lucro: lucro,
+        };
       }
     });
-    console.log(proccessedData);
+    
+    // console.log(proccessedData);
     res.status(200).send(proccessedData);
     // connection.end();
   });
 }
 
 function calculateReceita(value, tax) {
-  return value - (value*(tax/100));
+  // return value - (value*(tax/100));
+  return math.eval(`${value}-(${value}*(${tax}/100))`);
 }
 
 function round(value, decimals) {

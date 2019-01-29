@@ -11,7 +11,7 @@ export const store = new Vuex.Store({
 		fromYear: null,
 		toMonth: null,
 		toYear: null,
-		relatorio: null,
+		processedData: null,
 		consultors: [],
 		selected: [],
 	},
@@ -48,9 +48,6 @@ export const store = new Vuex.Store({
     	if (!getters.datesFilled){
     		return false;
     	}
-    	/*if (state.selected.length == 0) {
-    		return false;
-    	}*/
     	if (state.toYear >= state.fromYear) {
     		if (state.toYear == state.fromYear) {
     			if (state.toMonth >= state.fromMonth) {
@@ -68,38 +65,48 @@ export const store = new Vuex.Store({
 			state.consultors = data;
 		},
 		selectConsultor: (state, consultors) => {
-			state.selected.push(...consultors);
-			state.consultors = state.consultors.filter((co_usuario) => {
-				return !consultors.includes(co_usuario);
+			consultors.forEach(el => {
+				var res = state.consultors.filter(e => {
+					return e.value == el;
+				})[0];
+				state.selected.push(res);
+				state.consultors = state.consultors.filter(e => {
+					return e.value != el;
+				})
 			});
 		},
 		unselectConsultor: (state, consultors) => {
-			state.consultors.push(...consultors);
-			state.selected = state.selected.filter((co_usuario) => {
-				return !consultors.includes(co_usuario);
+			consultors.forEach(el => {
+				var res = state.selected.filter(e => {
+					return e.value == el;
+				})[0];
+				state.selected.push(res);
+				state.selected = state.selected.filter(e => {
+					return e.value != el;
+				})
 			});
 		},
-		updateRelatorio: (state, data) => {
-			state.relatorio = data;
+		updateProcessedData: (state, data) => {
+			state.processedData = data;
 		},
 		updateDateSelect: (state, data) => {
 			state[data.field] = data.value;
 		}
 	},
 	actions: {
-		generateRelatorio: (context) => {
+		processData: (context) => {
 			const state = context.state;
 			axios.post(`${config.apiDir}/relatorio`,
 				{
-					selected: state.selected,
+					selected: state.selected.map(elem => elem.value),
 					fromDate: `${state.fromYear}-${state.fromMonth}-01`,
 					toDate: `${state.toYear}-${state.toMonth}-01`,
 				}
 			)
       .then((response) => {
-        console.log(response.data);
-        context.commit('updateRelatorio', response.data);
+        // console.log(response.data);
+        context.commit('updateProcessedData', response.data);
       });
-		}
+		},
 	}
 });
