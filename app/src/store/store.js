@@ -80,7 +80,8 @@ export const store = new Vuex.Store({
 				var res = state.selected.filter(e => {
 					return e.value == el;
 				})[0];
-				state.selected.push(res);
+				console.log(res);
+				state.consultors.push(res);
 				state.selected = state.selected.filter(e => {
 					return e.value != el;
 				})

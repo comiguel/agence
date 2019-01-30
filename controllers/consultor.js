@@ -1,6 +1,5 @@
 const mysql = require('mysql');
 const config = require('../config');
-const math = require('mathjs');
 const connection = mysql.createConnection(config.db);
 // connection.query('USE agence');
 connection.connect(function(error){
@@ -52,23 +51,30 @@ function getRelatorio(req, res) {
       throw err;
     }
     var proccessedData = {};
+    var totalByConsultor = {};
     results.forEach(function(el) {
       let receita = calculateReceita(el.valor, el.total_imp_inc);
       let currentData = {
-        receita: math.round(receita, 2),
+        receita: receita,
         custo_fixo: el.salario || 0,
-        comissao: math.round(math.eval(`${receita}*(${el.comissao_cn}/100)`), 2),
+        // comissao: math.eval(`${receita}*(${el.comissao_cn}/100)`),
+        comissao: receita * (el.comissao_cn / 100),
       };
-      let lucro = math.round(currentData.receita - currentData.custo_fixo - currentData.comissao, 2);
+      let lucro = currentData.receita - currentData.custo_fixo - currentData.comissao;
       if (el.no_usuario in proccessedData) {
-        // proccessedData[el.no_usuario]['total_receita'] += currentData.receita;
-        if (el.label_date in proccessedData[el.no_usuario]) {
-          proccessedData[el.no_usuario][el.label_date]['receita'] += currentData.receita;
-          proccessedData[el.no_usuario][el.label_date]['custo_fixo'] += currentData.custo_fixo;
-          proccessedData[el.no_usuario][el.label_date]['comissao'] += currentData.comissao;
-          proccessedData[el.no_usuario][el.label_date]['lucro'] += lucro;
+        proccessedData[el.no_usuario]['global']['total_receita'] += currentData.receita;
+        totalByConsultor[el.no_usuario]['receita'] += currentData.receita;
+        totalByConsultor[el.no_usuario]['custo_fixo'] += currentData.custo_fixo;
+        totalByConsultor[el.no_usuario]['comissao'] += currentData.comissao;
+        totalByConsultor[el.no_usuario]['lucro'] += lucro;
+        if (el.label_date in proccessedData[el.no_usuario]['data']) {
+          // console.log(proccessedData);
+          proccessedData[el.no_usuario]['data'][el.label_date]['receita'] += currentData.receita;
+          proccessedData[el.no_usuario]['data'][el.label_date]['custo_fixo'] += currentData.custo_fixo;
+          proccessedData[el.no_usuario]['data'][el.label_date]['comissao'] += currentData.comissao;
+          proccessedData[el.no_usuario]['data'][el.label_date]['lucro'] += lucro;
         } else {
-          proccessedData[el.no_usuario][el.label_date] = {
+          proccessedData[el.no_usuario]['data'][el.label_date] = {
             receita: currentData.receita,
             custo_fixo: currentData.custo_fixo,
             comissao: currentData.comissao,
@@ -77,16 +83,25 @@ function getRelatorio(req, res) {
         }
       } else {
         proccessedData[el.no_usuario] = {};
-        // proccessedData[el.no_usuario]['total_receita'] = currentData.receita;
-        proccessedData[el.no_usuario][el.label_date] = {
+        proccessedData[el.no_usuario]['global'] = {total_receita: currentData.receita};
+        proccessedData[el.no_usuario]['data'] = {};
+        proccessedData[el.no_usuario]['data'][el.label_date] = {
           receita: currentData.receita,
           custo_fixo: currentData.custo_fixo,
           comissao: currentData.comissao,
-          lucro: lucro,
+          lucro,
         };
+        totalByConsultor[el.no_usuario] = {
+          receita: currentData.receita,
+          custo_fixo: currentData.custo_fixo,
+          comissao: currentData.comissao,
+          lucro,
+        }
       }
     });
-    
+    for (no_usuario in totalByConsultor) {
+      proccessedData[no_usuario]['global'] = totalByConsultor[no_usuario];
+    }
     // console.log(proccessedData);
     res.status(200).send(proccessedData);
     // connection.end();
@@ -94,8 +109,8 @@ function getRelatorio(req, res) {
 }
 
 function calculateReceita(value, tax) {
-  // return value - (value*(tax/100));
-  return math.eval(`${value}-(${value}*(${tax}/100))`);
+  return value - (value * (tax / 100));
+  // return math.eval(`${value}-(${value}*(${tax}/100))`);
 }
 
 function round(value, decimals) {

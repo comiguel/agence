@@ -8,16 +8,13 @@
 				</tr>
 			</thead>
 			<tbody>
-				<tr v-for="(value, k) in items">
+				<tr v-for="(value, k) in items.data" :key="k">
 					<td>{{k}}</td>
-					<td :class="{'table-danger': elem < 0}" v-for="elem in value">R$ {{format(elem, {notation: 'fixed', precision: 2})}}</td>
+					<td :class="{'text-danger': elem < 0}" v-for="elem in value">R$ {{format(elem, {notation: 'fixed', precision: 2})}}</td>
 				</tr>
 				<tr class="table-secondary">
-					<td>SALDO</td>
-					<td></td>
-					<td></td>
-					<td></td>
-					<td></td>
+					<td><strong>SALDO</strong></td>
+					<td :class="{'text-danger': elem < 0, 'text-success': verifyPositive(elem, i) }" v-for="(elem, i) in items.global">R$ {{format(elem, {notation: 'fixed', precision: 2})}}</td>
 				</tr>
 			</tbody>
 		</table>
@@ -28,7 +25,7 @@
 </template>
 
 <script>
-	import math from 'mathjs';
+	import numeral from 'numeral';
 	export default {
 		props: {
 			items: {type: Object},
@@ -62,7 +59,12 @@
 		},
 		methods: {
 			format(val, obj) {
-				return math.format(val, {notation: 'fixed', precision: 2})
+				// return math.format(val, {notation: 'fixed', precision: 2})
+				return numeral(val).format('R$0,0.00');
+			},
+			verifyPositive(val, i) {
+				if (val > 0 && i == 'lucro') return true;
+				return false;
 			}
 		},
 		computed: {
