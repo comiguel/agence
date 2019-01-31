@@ -1,3 +1,3 @@
 export default {
-	apiDir: process.env.apiDir || "https://salty-oasis-38363.herokuapp.com/api",
+	apiDir: process.env.apiDir || "http://198.199.77.244:3001/api",
 }

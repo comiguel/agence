@@ -1,0 +1,39 @@
+# Agence Challenge
+
+Solución propuesta por Carlos Hincapié :)
+
+
+## Tecnologías utilizadas
+
+- Bootstrap 4.2.1
+- VueJs 2.5.x
+- NodeJs 10.15.0
+- Webpack 3.12.x
+- GoogleCharts
+- MySql
+
+## Montaje DB
+
+Para el montaje de la BD MySql dada se tuvo que realizar una serie de pasos.
+- Se creó una base de datos.
+- Se realizaron algunas pequeñas correcciones de errores sintácticos encontrados en el archivo.
+- Al ser el archivo muy grande tocaba modificar el parámetro max_allowed_packet ("`mysql --max_allowed_packet=32M`") o bien directamente en el comando de importación ("`mysql -u[user] -p -h[host] [dbname] < [route/to/the/file.sql] --max_allowed_packet=32M"`)
+
+## Configuración de DB, puerto y url servidor
+
+Para un correcto funcionamiento se deben ajustar los siguientes parámetros:
+
+- Configuración a la base de datos y puerto que se en encuentra en el archivo `/confi.js`.
+- Configuración del host en el que está desplegado el backend que se encuentra en el archivo `/app/src/config.js`.
+
+## Compilar solución
+
+En el repositorio sólo están alojados los archivos fuentes con los que fue desarrollado el challenge, por lo que se debe realizar la compilación correspondiente con Webpack para la generación de la carpeta de producción "dist" para la capa frontend.
+
+- Instalar las dependencias requeridas para la compilación de frontend y backend:
+`npm install`, `cd app/` y posteriormente `npm install`.
+
+- Correr el comando configurado para que Webpack compile la salida desde el directorio `/app`:
+`npm run build`
+
+De esa manera el archivo `index.html` ya tendrá disponible y enlazado los archivos necesarios para su correcta visualización.
