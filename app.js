@@ -4,6 +4,7 @@ const app = express();
 
 const api = require('./routes');
 
+app.use(express.static('app'));
 app.use(bodyParser.urlencoded( { extended: false } ));
 app.use(bodyParser.json());
 app.use(function(req, res, next) {

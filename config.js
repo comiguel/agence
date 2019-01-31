@@ -1,10 +1,10 @@
 module.exports = {
 	port: process.env.PORT || 3001,
 	db: {
-		user: process.env.DBUSER || 'root',
-		password: process.env.DBPASSWORD || '',
-		host: process.env.DBHOST || '127.0.0.1',
-		database: process.env.DBDATABASE || 'agence',
-		port: process.env.DBPORT || '3306',
+		user: 'bfa58de255832f',
+		password: 'e1743829',
+		host: 'us-cdbr-iron-east-03.cleardb.net',
+		database: 'heroku_eaed489549d556d',
+		port: '3306',
 	}
 }
