@@ -50,8 +50,10 @@ function getRelatorio(req, res) {
       console.log("Error: " + err.message);
       throw err;
     }
-    var proccessedData = {};
+    var processedData = {};
     var totalByConsultor = {};
+    var totalAllConsultor = 0;
+    var salaries = {};
     results.forEach(function(el) {
       let receita = calculateReceita(el.valor, el.total_imp_inc);
       let currentData = {
@@ -61,20 +63,21 @@ function getRelatorio(req, res) {
         comissao: receita * (el.comissao_cn / 100),
       };
       let lucro = currentData.receita - currentData.custo_fixo - currentData.comissao;
-      if (el.no_usuario in proccessedData) {
-        proccessedData[el.no_usuario]['global']['total_receita'] += currentData.receita;
+      totalAllConsultor += currentData.receita;
+      if (el.no_usuario in processedData) {
+        processedData[el.no_usuario]['global']['total_receita'] += currentData.receita;
         totalByConsultor[el.no_usuario]['receita'] += currentData.receita;
-        totalByConsultor[el.no_usuario]['custo_fixo'] += currentData.custo_fixo;
         totalByConsultor[el.no_usuario]['comissao'] += currentData.comissao;
         totalByConsultor[el.no_usuario]['lucro'] += lucro;
-        if (el.label_date in proccessedData[el.no_usuario]['data']) {
-          // console.log(proccessedData);
-          proccessedData[el.no_usuario]['data'][el.label_date]['receita'] += currentData.receita;
-          proccessedData[el.no_usuario]['data'][el.label_date]['custo_fixo'] += currentData.custo_fixo;
-          proccessedData[el.no_usuario]['data'][el.label_date]['comissao'] += currentData.comissao;
-          proccessedData[el.no_usuario]['data'][el.label_date]['lucro'] += lucro;
+        if (el.label_date in processedData[el.no_usuario]['data']) {
+          // console.log(processedData);
+          processedData[el.no_usuario]['data'][el.label_date]['receita'] += currentData.receita;
+          // processedData[el.no_usuario]['data'][el.label_date]['custo_fixo'] += currentData.custo_fixo;
+          processedData[el.no_usuario]['data'][el.label_date]['comissao'] += currentData.comissao;
+          processedData[el.no_usuario]['data'][el.label_date]['lucro'] += lucro;
         } else {
-          proccessedData[el.no_usuario]['data'][el.label_date] = {
+          totalByConsultor[el.no_usuario]['custo_fixo'] += currentData.custo_fixo;
+          processedData[el.no_usuario]['data'][el.label_date] = {
             receita: currentData.receita,
             custo_fixo: currentData.custo_fixo,
             comissao: currentData.comissao,
@@ -82,10 +85,10 @@ function getRelatorio(req, res) {
           };
         }
       } else {
-        proccessedData[el.no_usuario] = {};
-        proccessedData[el.no_usuario]['global'] = {total_receita: currentData.receita};
-        proccessedData[el.no_usuario]['data'] = {};
-        proccessedData[el.no_usuario]['data'][el.label_date] = {
+        processedData[el.no_usuario] = {};
+        processedData[el.no_usuario]['global'] = {total_receita: currentData.receita};
+        processedData[el.no_usuario]['data'] = {};
+        processedData[el.no_usuario]['data'][el.label_date] = {
           receita: currentData.receita,
           custo_fixo: currentData.custo_fixo,
           comissao: currentData.comissao,
@@ -96,14 +99,22 @@ function getRelatorio(req, res) {
           custo_fixo: currentData.custo_fixo,
           comissao: currentData.comissao,
           lucro,
-        }
+        };
+        salaries[el.no_usuario] = currentData.custo_fixo;
       }
     });
-    for (no_usuario in totalByConsultor) {
-      proccessedData[no_usuario]['global'] = totalByConsultor[no_usuario];
+    var averageCost = 0;
+    var nConsultors = 0;
+    var percents = {};
+    for (var no_usuario in totalByConsultor) {
+      processedData[no_usuario]['global'] = totalByConsultor[no_usuario];
+      averageCost += salaries[no_usuario];
+      percents[no_usuario] = totalAllConsultor/totalByConsultor[no_usuario]['receita'];
+      nConsultors += 1;
     }
-    // console.log(proccessedData);
-    res.status(200).send(proccessedData);
+
+    averageCost = averageCost/nConsultors;
+    res.status(200).send({processedData, averageCost, percents, totalAllConsultor});
     // connection.end();
   });
 }

@@ -1,7 +1,7 @@
 <template>
 	<div>
 		<table class="table table-bordered table-hover table-striped">
-			<caption class="caption-top">{{consultor}}</caption>
+			<caption class="caption-top bg-info"><strong class="text-white mx-2">{{consultor}}</strong></caption>
 			<thead>
 				<tr>
 					<th class="text-center" v-for="f in fields">{{f.label}}</th>

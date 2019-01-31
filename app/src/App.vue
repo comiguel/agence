@@ -2,9 +2,9 @@
   <b-container>
     <navbar></navbar>
     <b-row class="justify-content-center my-5">
-      <b-col md="8">
-        <b-row>
-          <b-col md="2">Periodo</b-col>
+      <b-col md="9">
+        <b-row class="justify-content-center">
+          <b-col md="2"><p class="text-center">Periodo</p></b-col>
           <b-col md="10">
             de
             <b-form-select class="select" @change="updateDateSelect('fromMonth', $event)" :options="months"></b-form-select>
@@ -18,20 +18,20 @@
           </b-row>
         </b-row>
         <b-row class="mt-5">
-          <b-col md="2">Consultores</b-col>
+          <b-col md="2"><p class="text-center">Consultores</p></b-col>
           <b-col md="4">
             <selector multi="multiple" :data="consultors" ref="total"></selector>
           </b-col>
           <b-col md="2">
-            <b-button @click="selectConsultor">>></b-button>
             <b-button @click="unselectConsultor"><<</b-button>
+            <b-button @click="selectConsultor">>></b-button>
           </b-col>
           <b-col md="4">
             <selector multi="multiple" :data="selected" ref="selected"></selector>
           </b-col>
         </b-row>
       </b-col>
-      <b-col md="4">
+      <b-col md="3">
         <b-row class="justify-content-center my-2">
           <b-button :disabled="!btnState" @click="generateRelatorio" variant="info">Relatório</b-button>
         </b-row>
@@ -60,7 +60,7 @@
     components: {navbar, selector, detail},
     data() {
       return {
-        component: 'consultor',
+        component: '',
       }
     },
     mounted() {
